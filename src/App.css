@@ -1,0 +1,108 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.settings {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.color-select,
+.difficulty-select,
+.chess960-select,
+.piece-set-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chess960-select input[type="checkbox"] {
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  background-color: #1a1a1a;
+  color: white;
+  border: 1px solid #646cff;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  background-color: #646cff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #747bff;
+}
+
+.board-container {
+  position: relative;
+  width: 600px;
+  max-width: 100%;
+}
+
+.board {
+  width: 100%;
+}
+
+.game-status {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 100;
+}
+
+.alert {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.check {
+  background-color: #ffd700;
+  color: #000;
+}
+
+.game-over {
+  background-color: #ff4444;
+  color: white;
+}
+
+.thinking {
+  background-color: #646cff;
+  color: white;
+  animation: fadeIn 0.3s ease-in-out, pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

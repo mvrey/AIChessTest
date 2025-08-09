@@ -1,15 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
+import { ChessAI } from './services/ChessAI';
+import { Chess960Generator } from './services/Chess960Generator';
+import { GameStatus } from './models/ChessPosition';
 import './App.css';
-
-interface GameStatus {
-  isCheck: boolean;
-  isGameOver: boolean;
-  isDraw: boolean;
-  isCheckmate: boolean;
-  winner: 'white' | 'black' | null;
-}
 
 // Definir los diferentes sets de piezas disponibles
 const pieceSets = {
@@ -117,338 +112,22 @@ function App() {
     }
   }, [updateGameStatus]);
 
-  // Tablas de posición para cada pieza
-  const pawnTable = [
-    [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0],
-    [5.0,  5.0,  5.0,  5.0,  5.0,  5.0,  5.0,  5.0],
-    [1.0,  1.0,  2.0,  3.0,  3.0,  2.0,  1.0,  1.0],
-    [0.5,  0.5,  1.0,  2.0,  2.0,  1.0,  0.5,  0.5],
-    [0.0,  0.0,  0.0,  1.5,  1.5,  0.0,  0.0,  0.0],
-    [0.5, -0.5, -1.0, -1.0, -1.0, -1.0, -0.5,  0.5],
-    [0.5,  1.0,  1.0,  -2.0, -2.0,  1.0,  1.0,  0.5],
-    [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
-  ];
 
-  const knightTable = [
-    [-5.0, -4.0, -3.0, -3.0, -3.0, -3.0, -4.0, -5.0],
-    [-4.0, -2.0,  0.0,  0.0,  0.0,  0.0, -2.0, -4.0],
-    [-3.0,  0.0,  1.0,  1.5,  1.5,  1.0,  0.0, -3.0],
-    [-3.0,  0.5,  1.5,  2.0,  2.0,  1.5,  0.5, -3.0],
-    [-3.0,  0.0,  1.5,  2.0,  2.0,  1.5,  0.0, -3.0],
-    [-3.0,  0.5,  1.0,  1.5,  1.5,  1.0,  0.5, -3.0],
-    [-4.0, -2.0,  0.0,  0.5,  0.5,  0.0, -2.0, -4.0],
-    [-5.0, -4.0, -3.0, -3.0, -3.0, -3.0, -4.0, -5.0]
-  ];
 
-  const bishopTable = [
-    [-2.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -2.0],
-    [-1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -1.0],
-    [-1.0,  0.0,  0.5,  1.0,  1.0,  0.5,  0.0, -1.0],
-    [-1.0,  0.5,  0.5,  1.0,  1.0,  0.5,  0.5, -1.0],
-    [-1.0,  0.0,  1.0,  1.0,  1.0,  1.0,  0.0, -1.0],
-    [-1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0, -1.0],
-    [-1.0,  0.5,  0.0,  0.0,  0.0,  0.0,  0.5, -1.0],
-    [-2.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -2.0]
-  ];
-
-  const rookTable = [
-    [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0],
-    [0.5,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  0.5],
-    [-0.5,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -0.5],
-    [-0.5,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -0.5],
-    [-0.5,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -0.5],
-    [-0.5,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -0.5],
-    [-0.5,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -0.5],
-    [0.0,   0.0,  0.0,  0.5,  0.5,  0.0,  0.0,  0.0]
-  ];
-
-  const queenTable = [
-    [-2.0, -1.0, -1.0, -0.5, -0.5, -1.0, -1.0, -2.0],
-    [-1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -1.0],
-    [-1.0,  0.0,  0.5,  0.5,  0.5,  0.5,  0.0, -1.0],
-    [-0.5,  0.0,  0.5,  0.5,  0.5,  0.5,  0.0, -0.5],
-    [0.0,  0.0,  0.5,  0.5,  0.5,  0.5,  0.0, -0.5],
-    [-1.0,  0.5,  0.5,  0.5,  0.5,  0.5,  0.0, -1.0],
-    [-1.0,  0.0,  0.5,  0.0,  0.0,  0.0,  0.0, -1.0],
-    [-2.0, -1.0, -1.0, -0.5, -0.5, -1.0, -1.0, -2.0]
-  ];
-
-  const kingMiddleGameTable = [
-    [-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
-    [-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
-    [-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
-    [-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
-    [-2.0, -3.0, -3.0, -4.0, -4.0, -3.0, -3.0, -2.0],
-    [-1.0, -2.0, -2.0, -2.0, -2.0, -2.0, -2.0, -1.0],
-    [2.0,  2.0,  0.0,  0.0,  0.0,  0.0,  2.0,  2.0],
-    [2.0,  3.0,  1.0,  0.0,  0.0,  1.0,  3.0,  2.0]
-  ];
-
-  // Función de evaluación de posición
-  const evaluatePosition = (board: Chess) => {
-    const pieceValues = {
-      p: 100,   // Peón
-      n: 320,   // Caballo
-      b: 330,   // Alfil
-      r: 500,   // Torre
-      q: 900,   // Dama
-      k: 20000  // Rey (valor alto para protegerlo)
-    };
-
-    let score = 0;
-    const position = board.board();
-    const isEndgame = isEndgamePhase(position);
-    const moveCount = Math.floor(board.moveNumber() / 2);
-    const isOpening = moveCount < 10;
-
-    // Evaluar material y posición
-    let whitePawnCount = 0;
-    let blackPawnCount = 0;
-    let whiteCenterPawns = 0;
-    let blackCenterPawns = 0;
-    let whiteDevPieces = 0;
-    let blackDevPieces = 0;
-
-    for (let i = 0; i < 8; i++) {
-      for (let j = 0; j < 8; j++) {
-        const piece = position[i][j];
-        if (piece) {
-          const value = pieceValues[piece.type as keyof typeof pieceValues];
-          let positionBonus = getPositionBonus(piece.type, i, j, isEndgame);
-          
-          // Conteo de peones y piezas desarrolladas
-          if (piece.type === 'p') {
-            if (piece.color === 'w') {
-              whitePawnCount++;
-              if (j >= 3 && j <= 4) whiteCenterPawns++;
-            } else {
-              blackPawnCount++;
-              if (j >= 3 && j <= 4) blackCenterPawns++;
-            }
-          }
-
-          // Penalizar movimiento temprano de la dama
-          if (isOpening && piece.type === 'q') {
-            const startRow = piece.color === 'w' ? 7 : 0;
-            if (i !== startRow) {
-              positionBonus -= 30;
-            }
-          }
-
-          // Penalizar movimiento temprano del rey (anti-bongcloud)
-          if (isOpening && piece.type === 'k') {
-            const startRow = piece.color === 'w' ? 7 : 0;
-            if (i !== startRow) {
-              positionBonus -= 100;
-            }
-          }
-
-          // Contar piezas desarrolladas
-          if (['n', 'b'].includes(piece.type)) {
-            const startRow = piece.color === 'w' ? 7 : 0;
-            if (i !== startRow) {
-              if (piece.color === 'w') whiteDevPieces++;
-              else blackDevPieces++;
-            }
-          }
-          
-          if (piece.color === 'w') {
-            score += value + positionBonus;
-          } else {
-            score -= value + positionBonus;
-          }
-        }
-      }
-    }
-
-    // Penalizaciones y bonus específicos para la apertura
-    if (isOpening) {
-      // Penalizar exceso de movimientos de peones en la apertura
-      if (whiteCenterPawns > 2) score -= (whiteCenterPawns - 2) * 20;
-      if (blackCenterPawns > 2) score += (blackCenterPawns - 2) * 20;
-
-      // Bonus por desarrollo de piezas menores
-      score += whiteDevPieces * 15;
-      score -= blackDevPieces * 15;
-
-      // Penalizar por no desarrollar piezas
-      if (moveCount > 4) {
-        score -= (4 - whiteDevPieces) * 10;
-        score += (4 - blackDevPieces) * 10;
-      }
-
-      // Bonus por control del centro con piezas menores
-      for (let i = 2; i <= 5; i++) {
-        for (let j = 2; j <= 5; j++) {
-          const piece = position[i][j];
-          if (piece && ['n', 'b'].includes(piece.type)) {
-            if (piece.color === 'w') score += 10;
-            else score -= 10;
-          }
-        }
-      }
-    }
-
-    // Penalizar al rey expuesto
-    const whiteKingSafety = evaluateKingSafety(board, 'w');
-    const blackKingSafety = evaluateKingSafety(board, 'b');
-    score += (whiteKingSafety - blackKingSafety) * (isOpening ? 1.0 : 0.5);
-
-    // Bonus por movilidad
-    const whiteMobility = board.moves().length;
-    // Crear una nueva instancia para verificar movilidad del negro
-    const tempBoard = new Chess(board.fen());
-    // Forzar el turno del negro cambiando el FEN
-    const fenParts = tempBoard.fen().split(' ');
-    fenParts[1] = 'b';
-    tempBoard.load(fenParts.join(' '));
-    const blackMobility = tempBoard.moves().length;
-    score += (whiteMobility - blackMobility) * 0.1;
-
-    return score;
-  };
-
-  // Función auxiliar para determinar si estamos en el final del juego
-  const isEndgamePhase = (position: ({ type: string, color: string } | null)[][]) => {
-    let majorPieces = 0;
-    for (let i = 0; i < 8; i++) {
-      for (let j = 0; j < 8; j++) {
-        const piece = position[i][j];
-        if (piece && (piece.type === 'q' || piece.type === 'r')) {
-          majorPieces++;
-        }
-      }
-    }
-    return majorPieces <= 2;
-  };
-
-  // Función para obtener el bonus de posición según la pieza
-  const getPositionBonus = (pieceType: string, row: number, col: number, isEndgame: boolean) => {
-    const r = row;
-    const c = col;
-    
-    switch (pieceType) {
-      case 'p': return pawnTable[r][c];
-      case 'n': return knightTable[r][c];
-      case 'b': return bishopTable[r][c];
-      case 'r': return rookTable[r][c];
-      case 'q': return queenTable[r][c];
-      case 'k': return isEndgame ? -kingMiddleGameTable[r][c] : kingMiddleGameTable[r][c];
-      default: return 0;
-    }
-  };
-
-  // Función para evaluar la seguridad del rey
-  const evaluateKingSafety = (board: Chess, color: 'w' | 'b') => {
-    const position = board.board();
-    let kingRow = -1;
-    let kingCol = -1;
-    
-    // Encontrar posición del rey
-    for (let i = 0; i < 8; i++) {
-      for (let j = 0; j < 8; j++) {
-        const piece = position[i][j];
-        if (piece && piece.type === 'k' && piece.color === color) {
-          kingRow = i;
-          kingCol = j;
-          break;
-        }
-      }
-      if (kingRow !== -1) break;
-    }
-
-    let safety = 0;
-    
-    // Verificar peones protectores
-    const pawnDirection = color === 'w' ? 1 : -1;
-    if (kingRow + pawnDirection >= 0 && kingRow + pawnDirection < 8) {
-      if (kingCol > 0) {
-        const piece = position[kingRow + pawnDirection][kingCol - 1];
-        if (piece && piece.type === 'p' && piece.color === color) safety += 3;
-      }
-      if (kingCol < 7) {
-        const piece = position[kingRow + pawnDirection][kingCol + 1];
-        if (piece && piece.type === 'p' && piece.color === color) safety += 3;
-      }
-    }
-
-    // Penalizar rey expuesto
-    safety -= Math.abs(kingCol - 4) * 2; // Penalización por distancia del centro horizontal
-    safety -= (color === 'w' ? kingRow - 7 : kingRow) * 3; // Penalización por distancia de la fila base
-
-    return safety;
-  };
-
-  // Función minimax con poda alfa-beta
-  const minimax = (board: Chess, depth: number, alpha: number, beta: number, isMaximizing: boolean): number => {
-    if (depth === 0 || board.isGameOver()) {
-      return evaluatePosition(board);
-    }
-
-    const moves = board.moves({ verbose: true });
-
-    if (isMaximizing) {
-      let maxEval = -Infinity;
-      for (const move of moves) {
-        const newBoard = new Chess(board.fen());
-        newBoard.move(move);
-        const evaluation = minimax(newBoard, depth - 1, alpha, beta, false);
-        maxEval = Math.max(maxEval, evaluation);
-        alpha = Math.max(alpha, evaluation);
-        if (beta <= alpha) break;
-      }
-      return maxEval;
-    } else {
-      let minEval = Infinity;
-      for (const move of moves) {
-        const newBoard = new Chess(board.fen());
-        newBoard.move(move);
-        const evaluation = minimax(newBoard, depth - 1, alpha, beta, true);
-        minEval = Math.min(minEval, evaluation);
-        beta = Math.min(beta, evaluation);
-        if (beta <= alpha) break;
-      }
-      return minEval;
-    }
-  };
-
-  // Función para obtener la profundidad según el nivel ELO
-  const getDepthFromElo = (elo: number): number => {
-    if (elo <= 800) return 1;
-    if (elo <= 1000) return 2;
-    if (elo <= 1200) return 3;
-    return 4; // Para ELO 1500
-  };
+  const aiRef = useRef(new ChessAI());
 
   const makeAiMove = useCallback(() => {
     const legalMoves = gameRef.current.moves({ verbose: true });
     
     if (legalMoves && legalMoves.length > 0) {
       setIsThinking(true);
-      const depth = getDepthFromElo(aiLevel);
-      let bestMove = legalMoves[0];
+      const depth = aiRef.current.getDepthFromElo(aiLevel);
+      const randomFactor = aiLevel < 1000 ? Math.random() * 2 - 1 : 0;
 
       // Usar setTimeout para no bloquear la interfaz
       setTimeout(() => {
-        let bestEval = -Infinity;
-        const randomFactor = aiLevel < 1000 ? Math.random() * 2 - 1 : 0;
-
-        for (const move of legalMoves) {
-          const newBoard = new Chess(gameRef.current.fen());
-          newBoard.move(move);
-          const evaluation = minimax(newBoard, depth - 1, -Infinity, Infinity, false) + randomFactor;
-          
-          if (evaluation > bestEval) {
-            bestEval = evaluation;
-            bestMove = move;
-          }
-        }
-        
-        makeMove({
-          from: bestMove.from,
-          to: bestMove.to,
-          promotion: bestMove.promotion || 'q'
-        });
+        const bestMove = aiRef.current.findBestMove(gameRef.current, depth, randomFactor);
+        makeMove(bestMove);
         setIsThinking(false);
       }, 100);
     }
@@ -476,70 +155,7 @@ function App() {
     return false;
   }, [playerColor, makeMove, makeAiMove]);
 
-  // Función para generar una posición inicial válida de Chess960
-  const generateChess960Position = () => {
-    try {
-      // Generar posiciones para las piezas
-      let positions = Array(8).fill(null);
-      
-      // 1. Colocar alfiles en casillas de diferente color
-      const darkBishopPos = Math.floor(Math.random() * 4) * 2; // 0, 2, 4, o 6
-      const lightBishopPos = Math.floor(Math.random() * 4) * 2 + 1; // 1, 3, 5, o 7
-      positions[darkBishopPos] = 'b';
-      positions[lightBishopPos] = 'b';
-      
-      // 2. Colocar el rey entre las torres
-      let emptySquares = positions.map((p, i) => p === null ? i : null).filter(i => i !== null);
-      
-      // Encontrar tres posiciones consecutivas para las torres y el rey
-      let foundPosition = false;
-      let rookPos1, kingPos, rookPos2;
-      
-      while (!foundPosition && emptySquares.length >= 3) {
-        const startIdx = Math.floor(Math.random() * (emptySquares.length - 2));
-        if (emptySquares[startIdx + 1] === emptySquares[startIdx] + 1 &&
-            emptySquares[startIdx + 2] === emptySquares[startIdx] + 2) {
-          rookPos1 = emptySquares[startIdx];
-          kingPos = emptySquares[startIdx + 1];
-          rookPos2 = emptySquares[startIdx + 2];
-          foundPosition = true;
-        }
-      }
-      
-      if (!foundPosition) {
-        throw new Error("No se pudo encontrar una posición válida para las torres y el rey");
-      }
-      
-      positions[rookPos1] = 'r';
-      positions[kingPos] = 'k';
-      positions[rookPos2] = 'r';
-      
-      // 3. Colocar reina y caballos en las posiciones restantes
-      emptySquares = positions.map((p, i) => p === null ? i : null).filter(i => i !== null);
-      const queenPos = emptySquares[Math.floor(Math.random() * emptySquares.length)];
-      positions[queenPos] = 'q';
-      
-      emptySquares = positions.map((p, i) => p === null ? i : null).filter(i => i !== null);
-      const knight1Pos = emptySquares[Math.floor(Math.random() * emptySquares.length)];
-      positions[knight1Pos] = 'n';
-      
-      emptySquares = positions.map((p, i) => p === null ? i : null).filter(i => i !== null);
-      const knight2Pos = emptySquares[0];
-      positions[knight2Pos] = 'n';
-      
-      // Validar que todas las posiciones están ocupadas
-      if (positions.some(p => p === null)) {
-        throw new Error("Algunas posiciones quedaron sin asignar");
-      }
-      
-      // Retornar solo la primera fila en mayúsculas
-      return positions.join('').toUpperCase();
-    } catch (error) {
-      console.error('Error generating Chess960 position:', error);
-      // En caso de error, retornar la posición estándar
-      return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-    }
-  };
+  const chess960Ref = useRef(new Chess960Generator());
   // Función para resetear el juego
   const resetGame = useCallback(() => {
     try {
@@ -548,53 +164,8 @@ function App() {
       
       // Si es Chess960, configurar una nueva posición
       if (isChess960) {
-        // Primero limpiar el tablero
-        gameRef.current.clear();
-        
-        // Generar la posición de Chess960
-        const positions = generateChess960Position();
-        const firstRank = positions.substring(0, 8);
-        
-        // Función auxiliar para convertir tipo de pieza
-        const getPieceType = (char: string): 'p' | 'n' | 'b' | 'r' | 'q' | 'k' => {
-          const mapping: { [key: string]: 'p' | 'n' | 'b' | 'r' | 'q' | 'k' } = {
-            'P': 'p', 'N': 'n', 'B': 'b', 'R': 'r', 'Q': 'q', 'K': 'k',
-            'p': 'p', 'n': 'n', 'b': 'b', 'r': 'r', 'q': 'q', 'k': 'k'
-          };
-          return mapping[char] || 'p';
-        };
-        
-        // Función auxiliar para convertir coordenadas a notación algebraica
-        const toSquare = (file: number, rank: number): string => {
-          return `${'abcdefgh'[file]}${rank}`;
-        };
-        
-        // Colocar las piezas una por una
-        for (let i = 0; i < 8; i++) {
-          // Colocar piezas blancas
-          gameRef.current.put({ 
-            type: getPieceType(firstRank[i]), 
-            color: 'w' 
-          }, toSquare(i, 1) as any);
-          
-          // Colocar peones blancos
-          gameRef.current.put({ 
-            type: 'p' as const, 
-            color: 'w' 
-          }, toSquare(i, 2) as any);
-          
-          // Colocar peones negros
-          gameRef.current.put({ 
-            type: 'p' as const, 
-            color: 'b' 
-          }, toSquare(i, 7) as any);
-          
-          // Colocar piezas negras
-          gameRef.current.put({ 
-            type: getPieceType(firstRank[i]), 
-            color: 'b' 
-          }, toSquare(i, 8) as any);
-        }
+        const firstRank = chess960Ref.current.generatePosition();
+        chess960Ref.current.setupPosition(gameRef.current, firstRank);
       }
       
       setFen(gameRef.current.fen());

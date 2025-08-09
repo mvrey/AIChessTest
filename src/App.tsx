@@ -159,15 +159,8 @@ function App() {
   // Función para resetear el juego
   const resetGame = useCallback(() => {
     try {
-      // Crear una nueva instancia de Chess con la posición inicial estándar
+      // Siempre crear una nueva instancia de Chess con la posición inicial estándar
       gameRef.current = new Chess();
-      
-      // Si es Chess960, configurar una nueva posición
-      if (isChess960) {
-        const firstRank = chess960Ref.current.generatePosition();
-        chess960Ref.current.setupPosition(gameRef.current, firstRank);
-      }
-      
       setFen(gameRef.current.fen());
       setGameStatus({
         isCheck: false,
@@ -181,9 +174,9 @@ function App() {
         setTimeout(makeAiMove, 300);
       }
     } catch (error) {
-      console.error('Error setting up Chess960 position:', error);
+      console.error('Error resetting game:', error);
     }
-  }, [playerColor, makeAiMove, isChess960]);
+  }, [playerColor, makeAiMove]);
 
   // Effect para reiniciar el juego cuando cambia el color del jugador
   useEffect(() => {
@@ -221,9 +214,21 @@ function App() {
               type="checkbox" 
               checked={isChess960}
               onChange={(e) => {
-                setIsChess960(e.target.checked);
-                // Reiniciar el juego cuando se cambia el modo
-                setTimeout(resetGame, 0);
+                const newValue = e.target.checked;
+                setIsChess960(newValue);
+                if (newValue) {
+                  // Solo generar nueva posición Chess960 cuando se activa
+                  const firstRank = chess960Ref.current.generatePosition();
+                  gameRef.current = new Chess();
+                  chess960Ref.current.setupPosition(gameRef.current, firstRank);
+                  setFen(gameRef.current.fen());
+                  if (playerColor === 'black') {
+                    setTimeout(makeAiMove, 300);
+                  }
+                } else {
+                  // Al desactivar, volver a posición inicial estándar
+                  resetGame();
+                }
               }}
             />
             Chess960
